@@ -17,7 +17,7 @@ require "system/user"
 require "time"
 
 APP_NAME  = "Cryfetch"
-VERSION   = "alpha 0.4"
+VERSION   = "alpha 0.44.0"
 LICENSE   = "MIT License"
 COPYRIGHT = "Copyright (c) 2024 Lilith Parker"
 
@@ -139,6 +139,9 @@ def pack : String
 
   # Generate the output string
   if package_counts.empty?
+    # in the event that there are no package managers available
+    # (WHICH THERE SHOULDN'T BECAUSE PKGUTIL SHOULD BE THERE BY DEFAULT)
+    # we return the following error message
     "No package manager installed or no packages found"
   else
     package_counts.map { |k, v| "(#{k}) #{v}" }.join(", ")
@@ -152,7 +155,9 @@ end
 def ram : String
   hw_pagesize = `sysctl -n hw.pagesize`.strip.to_i64
   mem_total = (`sysctl -n hw.memsize`.strip.chomp(".").to_i64 / 1024 / 1024 / 1024).to_i64
-  pages_app = (`sysctl -n vm.page_pageable_internal_count`.strip.chomp(".").to_i64 - `sysctl -n vm.page_purgeable_count`.strip.chomp(".").to_i64) # literally just me eating the string until it containes nothing but what is needed
+
+  # literally just me eating the string until it containes nothing but what is needed
+  pages_app = (`sysctl -n vm.page_pageable_internal_count`.strip.chomp(".").to_i64 - `sysctl -n vm.page_purgeable_count`.strip.chomp(".").to_i64)
   pages_wired = `vm_stat | awk '/ wired/ { print $4 }'`.strip.chomp(".").to_i64
   pages_compressed = `vm_stat | awk '/ occupied/ { printf $5 }'`.strip.chomp(".").to_i64 || 0
   mem_used = ((pages_app + pages_wired + pages_compressed) * hw_pagesize / 1024 / 1024 / 1024).to_i64
@@ -164,20 +169,31 @@ module SystemInfoFetcher
   extend self
 
   def fetch_info : SystemInfo
-    ausr = System::User.find_by(name: ENV["USER"]).username # Extracting the name from System::User
-    husr = "#{ausr}".strip("(501)").strip(" ") + "@#{`hostname`.strip}" # Stupid User (You)
-    opsy = "#{`sw_vers | grep "ProductName:"`.strip("ProductName:").strip} " + " #{`sw_vers | grep "ProductVersion:"`.strip("ProductVersion:").strip}" # Why doesn't neofetch do this??? Does no one seriously know about sw_vers????????
-    kern = "#{`uname`.chomp} " + "#{`uname -r`.strip}" # It's all Darwin? Always has been.
+    # Extracting the name from System::User
+    ausr = System::User.find_by(name: ENV["USER"]).username
+    
+    # Stupid User (You)
+    husr = "#{ausr}".strip("(501)").strip(" ") + "@#{`hostname`.strip}"
+
+    # Why doesn't neofetch do this??? Does no one seriously know about sw_vers????????
+    opsy = "#{`sw_vers | grep "ProductName:"`.strip("ProductName:").strip} " + " #{`sw_vers | grep "ProductVersion:"`.strip("ProductVersion:").strip}"
+
+    # It's all Darwin? Always has been.
+    kern = "#{`uname`.chomp} " + "#{`uname -r`.strip}"
+
     arch = "#{`uname -m`.chomp}"
     time = clck
     pkgs = "#{pack}"
+    
     # fetches launch shell because I couldn't be bothered to fetch the current user shell.
     # also because I didn't feel like adding support for Xonsh
     shll = `echo $SHELL`.strip
+    
     # It's literally just Apple Silicon, what else do you want from me
     cpux = "#{`sysctl -a | grep brand`.strip("machdep.cpu.brand_string:").strip(" ").chomp}" + " // " + "#{System.cpu_count} Cores".chomp
     gpux = "#{`system_profiler SPDisplaysDataType | grep "Chipset Model:"`.strip("Chipset Model:")}".chomp
     ramx = "#{ram}"
+    
     # Couldn't be bothered to read the networking docs for crystal
     intf = `ifconfig en0 | awk '/^[a-z]/ {print $1}'`.strip.strip(":")
     ipv4 = `ifconfig en0 | grep inet | grep -v inet6 | awk '{print $2}'`.strip
@@ -188,8 +204,9 @@ module SystemInfoFetcher
 end
 
 # HOLY SHIT FUCKING IMPORTANT NOTE! 
-# DUE TO THE WAY HEREDOC WORKS ON CRYSTAL, YOU MUST 
-# ASCII ART NEED TO BE 13 LINES EXACTLY OR ELSE IT WILL RESULT IN AN INDEX OUT OF BOUNDS ERROR
+# DUE TO THE WAY HEREDOC WORKS ON CRYSTAL, YOU MUST MAKE SURE THAT THE
+# ASCII ART NEED IS EXACTLY 13 LINES OR ELSE IT WILL RESULT IN AN 
+# INDEX OUT OF BOUNDS ERROR AND COMPLETELY FUCK THE PROGRAM.
 def print_system_info(info : SystemInfo)
   ascii_art = <<-ASCII
     ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⠀⠀⠀⠀⠀⠀
@@ -224,6 +241,11 @@ def print_system_info(info : SystemInfo)
   ipv6 - #{info.ipv6}
   INFO
 
+
+  # NEED TO SPLIT THE LINES IN ORDER FOR
+  # US TO RENDER THE TEXT TO THE RIGHT OF
+  # THE ASCII ART
+
   # Splitting the ASCII art into lines
   ascii_lines = ascii_art.chomp.split("\n")
 
@@ -234,6 +256,7 @@ def print_system_info(info : SystemInfo)
   padded_info_lines = info_lines.map { |line| line.ljust(31) }
 
   # Combine ASCII art and system info
+  # god i love concatenation
   combined_lines = ascii_lines.zip(padded_info_lines).map { |ascii_line, info_line| "#{ascii_line}    #{info_line}" }
 
   # Print the combined result
