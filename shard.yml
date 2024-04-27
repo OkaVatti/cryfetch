@@ -1,0 +1,13 @@
+name: cryfetch
+version: 0.44.0
+
+authors:
+  - Lily Parker okavatti@proton.me
+
+targets:
+  cryfetch:
+    main: src/cryfetch.cr
+
+crystal: '>= 1.12.1'
+
+license: MIT

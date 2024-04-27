@@ -1,0 +1,6 @@
+/spec/
+/docs/
+/lib/
+/bin/
+/.shards/
+*.dwarf
