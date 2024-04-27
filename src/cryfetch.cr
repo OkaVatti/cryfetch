@@ -1,16 +1,16 @@
 #
 # WARNING!!!!!!!!!!!!
-# THE FOLLOWING CODE IS UNSTABLE! 
-# IT CONTAINS VOODOO, AND WILL LIKELY WREAK 
+# THE FOLLOWING CODE IS UNSTABLE!
+# IT CONTAINS VOODOO, AND WILL LIKELY WREAK
 # TOTAL YOTADEATH UPON THE MULTIVERSE
 # USE AND MODIFY AT YOUR OWN RISK (of sanity)
-# 
+#
 
 # Cryfetch
 # A silly little neofetch clone for macOS
 # Written in Crystal v1.12.1
 # LLVM v18.1.4
-# 
+#
 # Built with the Crystal compiler on macOS 14.4.1
 
 require "system/user"
@@ -171,11 +171,11 @@ module SystemInfoFetcher
   def fetch_info : SystemInfo
     # Extracting the name from System::User
     ausr = System::User.find_by(name: ENV["USER"]).username
-    
+
     # Stupid User (You)
     husr = "#{ausr}".strip("(501)").strip(" ") + "@#{`hostname`.strip}"
 
-    # Why doesn't neofetch do this??? Does no one seriously know about sw_vers????????
+    # I hate this os
     opsy = "#{`sw_vers | grep "ProductName:"`.strip("ProductName:").strip} " + " #{`sw_vers | grep "ProductVersion:"`.strip("ProductVersion:").strip}"
 
     # It's all Darwin? Always has been.
@@ -184,16 +184,16 @@ module SystemInfoFetcher
     arch = "#{`uname -m`.chomp}"
     time = clck
     pkgs = "#{pack}"
-    
+
     # fetches launch shell because I couldn't be bothered to fetch the current user shell.
     # also because I didn't feel like adding support for Xonsh
     shll = `echo $SHELL`.strip
-    
+
     # It's literally just Apple Silicon, what else do you want from me
     cpux = "#{`sysctl -a | grep brand`.strip("machdep.cpu.brand_string:").strip(" ").chomp}" + " // " + "#{System.cpu_count} Cores".chomp
     gpux = "#{`system_profiler SPDisplaysDataType | grep "Chipset Model:"`.strip("Chipset Model:")}".chomp
     ramx = "#{ram}"
-    
+
     # Couldn't be bothered to read the networking docs for crystal
     intf = `ifconfig en0 | awk '/^[a-z]/ {print $1}'`.strip.strip(":")
     ipv4 = `ifconfig en0 | grep inet | grep -v inet6 | awk '{print $2}'`.strip
@@ -203,9 +203,9 @@ module SystemInfoFetcher
   end
 end
 
-# HOLY SHIT FUCKING IMPORTANT NOTE! 
+# HOLY SHIT FUCKING IMPORTANT NOTE!
 # DUE TO THE WAY HEREDOC WORKS ON CRYSTAL, YOU MUST MAKE SURE THAT THE
-# ASCII ART NEED IS EXACTLY 13 LINES OR ELSE IT WILL RESULT IN AN 
+# ASCII ART NEED IS EXACTLY 13 LINES OR ELSE IT WILL RESULT IN AN
 # INDEX OUT OF BOUNDS ERROR AND COMPLETELY FUCK THE PROGRAM.
 def print_system_info(info : SystemInfo)
   ascii_art = <<-ASCII
@@ -241,7 +241,6 @@ def print_system_info(info : SystemInfo)
   ipv6 - #{info.ipv6}
   INFO
 
-
   # NEED TO SPLIT THE LINES IN ORDER FOR
   # US TO RENDER THE TEXT TO THE RIGHT OF
   # THE ASCII ART
@@ -264,9 +263,13 @@ def print_system_info(info : SystemInfo)
 end
 
 def main
-  if ARGV.empty? # done to fix 
+  if ARGV.empty? # done to fix
     info = SystemInfoFetcher.fetch_info
+    puts ""
+    puts ""
     print_system_info(info)
+    puts ""
+    puts ""
   else
     case ARGV[0]
     when "-h"
